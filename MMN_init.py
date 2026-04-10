@@ -294,7 +294,7 @@ def preload_stim(win, run_number):
 
 def preload_txt(win):
     txt_intro = visual.TextStim(win, text="Sie werden einen Film sehen.\n\n Bitte konzentrieren Sie sich auf den Film und ignorieren Sie die Töne.\n\n Drücken Sie einen beliebigen Knopf, um zu starten.", height=1, pos=(0, 0), units='deg', color='black')
-    txt_finished = visual.TextStim(win, text="Dieser Durchgang ist beendet.\n\n Bitte warte auf die Anweisungen.", height=1, pos=(0, 0), units='deg', color='black')
+    txt_finished = visual.TextStim(win, text="Dieser Durchgang ist beendet.\n Vielen Dank. \n\n Bitte warten Sie auf Anweisungen.", height=1, pos=(0, 0), units='deg', color='black')
     return {"txt_intro": txt_intro, "txt_finished": txt_finished}
 
 
