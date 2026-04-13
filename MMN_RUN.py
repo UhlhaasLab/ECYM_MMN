@@ -3,6 +3,10 @@ Passive auditory MMN with visual distraction (silent cartoon)
 
 TO DO
 - 2 simple comprehension questions after the run
+
+
+
+- add core waits 0.016
 """
 from psychopy import visual, core, event, sound, monitors
 import csv, time, os
@@ -29,6 +33,7 @@ RUN = 1     # 1, then 2
 # -------------------- GENERAL --------------------
 #timestamp = time.strftime('%Y%m%d_%H%M%S') # this is only needed for logging. we dont need any logging here?
 global_clock = core.Clock()
+pixel_time = 0.016 # show the pixel for 2 frames
 
 # -------------------- WINDOW --------------------
 monitor_settings = stim_monitor()
@@ -37,7 +42,7 @@ win = visual.Window(
     monitor=monitor_settings['monitor_name'], size=monitor_settings['monitor_size_pix'], 
     fullscr=True, 
     units="deg", 
-    color=[211, 211, 211],
+    color=[212, 212, 212],
     colorSpace='rgb255', 
     #colorSpace='rgb',
     #colorSpace='rgb1',
@@ -72,7 +77,6 @@ def load_trials():
 trials = load_trials()
 
 # ============================================================================================
-# draw → win.flip() → device.updateRegisterCache() → read/debug
 # -------------------- INSTRUCTIONS --------------------
 instr.draw()
 win.flip()
@@ -83,8 +87,8 @@ flush_buttons(device, myLog)
 while True:
     button, _ = collect_response(device, myLog, buttonCodes)
     
-    #if button in ["red", "green"]: #+++COMMENT IN AGAIN WHEN VPIXX
-    if event.getKeys(keyList=['r','g','b']): # for keyboard testing: wait for any key press to start
+    if button in ["red", "green"]: # for VPIXX
+    #if event.getKeys(keyList=['r','g','b']): # for keyboard testing: wait for any key press to start
         break
     if check_abort():
         core.quit()
@@ -101,10 +105,9 @@ movie.setAutoDraw(True)
 movie.play()
 global_clock.reset()
 
-# 1. Show initial "Run Start" trigger (Analogous to Initial Fixation)
 draw_pixel(win, trigger_to_RGB(TRIG_RUN_START))
 win.flip()
-core.wait(0.02)  # to let trigger pixel settle
+core.wait(pixel_time)  # to let trigger pixel settle
 device.updateRegisterCache()
 print_trigger_info(device, TRIG_RUN_START)
 
@@ -142,7 +145,7 @@ while trial_idx < len(trials):
         
         win.flip() # Sound plays + Movie continues + Trigger appears
         
-        core.wait(0.02) # to let trigger pixel settle (consistent with emotion exp)
+        core.wait(pixel_time) # to let trigger pixel settle (consistent with emotion exp)
         device.updateRegisterCache()
         print_trigger_info(device, current_trig)
 
@@ -162,7 +165,7 @@ while trial_idx < len(trials):
 core.wait(SOA) # Wait for the final sound to finish playing
 draw_pixel(win, trigger_to_RGB(TRIG_RUN_END)) # Send the RUN_END trigger
 win.flip()
-core.wait(0.02) # to let trigger pixel settle
+core.wait(pixel_time) # to let trigger pixel settle
 device.updateRegisterCache()
 print_trigger_info(device, expected_trigger=TRIG_RUN_END)
 
