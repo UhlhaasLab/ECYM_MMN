@@ -4,6 +4,10 @@ TO DO
 - 2 simple comprehension questions after the run
 - add core waits 0.016
 - auditory stuff in init
+
+- tineke: should i store sound onset times to csv? or is trigger at sound onset enough?
+sound_onset_psy = flip_marks["t_onset_psy"]
+sound_onset_dev = flip_marks["t_onset_dev"]
 """
 from psychopy import visual, core, event, sound, monitors
 import csv, time, os
