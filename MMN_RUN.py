@@ -1,12 +1,9 @@
-"""
-Passive auditory MMN with visual distraction (silent cartoon)
+""" Passive auditory MMN with visual distraction (silent cartoon)
 
 TO DO
 - 2 simple comprehension questions after the run
-
-
-
 - add core waits 0.016
+- auditory stuff in init
 """
 from psychopy import visual, core, event, sound, monitors
 import csv, time, os
@@ -32,8 +29,11 @@ RUN = 1     # 1, then 2
 
 # -------------------- GENERAL --------------------
 #timestamp = time.strftime('%Y%m%d_%H%M%S') # this is only needed for logging. we dont need any logging here?
-global_clock = core.Clock()
+psychopy_clock = core.Clock()
 pixel_time = 0.016 # show the pixel for 2 frames
+SOA = 0.5 # stimulus onset asynchrony (time between sound onsets)
+trial_idx = 0
+next_sound_time = 0.0
 
 # -------------------- WINDOW --------------------
 monitor_settings = stim_monitor()
@@ -99,28 +99,25 @@ while True:
 #     countdown_text.draw()
 #     win.flip()
 #     core.wait(1.0) # Show each number for 1 second
+print(f"Starting Run {RUN}...")
 
 # -------------------- MAIN LOOP --------------------
 movie.setAutoDraw(True)
 movie.play()
-global_clock.reset()
+psychopy_clock.reset()
 
 draw_pixel(win, trigger_to_RGB(TRIG_RUN_START))
 win.flip()
 core.wait(pixel_time)  # to let trigger pixel settle
 device.updateRegisterCache()
-print_trigger_info(device, TRIG_RUN_START)
 
-SOA = 0.5
-trial_idx = 0
-next_sound_time = 0.0
+#print_trigger_info(device, TRIG_RUN_START)
 
-print(f"Starting Run {RUN}...")
 
 while trial_idx < len(trials):
     check_abort()
 
-    current_time = global_clock.getTime()
+    current_time = psychopy_clock.getTime()
 
     # --- 1. CHECK if it's time for a sound event ---
     if current_time >= next_sound_time:
@@ -142,12 +139,24 @@ while trial_idx < len(trials):
 
         # Sync sound and register cache timing to the flip
         win.callOnFlip(sound_to_play.play)
+
+        # audio for psychopy
+        #win.callOnFlip(audio_reg.play)  # audio exactly on flip -> THIS WORKS IN PSYCHOPY
+        
+        # audio for vpixx
+        infoaud_fb = audio_reg
+        device.audio.stopSchedule()
+        device.audio.setAudioSchedule(0.0, infoaud_fb['fs'], infoaud_fb['n'], 'mono')
+        device.audio.setReadAddress(infoaud_fb['addr'])
+        device.audio.startSchedule()
+        device.updateRegisterCache() # or self.device.updateRegCacheAfterVideoSync() ?
+
         
         win.flip() # Sound plays + Movie continues + Trigger appears
         
         core.wait(pixel_time) # to let trigger pixel settle (consistent with emotion exp)
         device.updateRegisterCache()
-        print_trigger_info(device, current_trig)
+        #print_trigger_info(device, current_trig)
 
         # --- 3. CLEAR TRIGGER ---
         win.flip() # Movie continues + Trigger cleared
@@ -167,7 +176,7 @@ draw_pixel(win, trigger_to_RGB(TRIG_RUN_END)) # Send the RUN_END trigger
 win.flip()
 core.wait(pixel_time) # to let trigger pixel settle
 device.updateRegisterCache()
-print_trigger_info(device, expected_trigger=TRIG_RUN_END)
+# print_trigger_info(device, expected_trigger=TRIG_RUN_END)
 
 print(f"Run {RUN} finished.")
 
