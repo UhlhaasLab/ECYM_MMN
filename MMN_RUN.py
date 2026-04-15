@@ -4,40 +4,36 @@ TO DO
 - 2 simple comprehension questions after the run
 - add core waits 0.016
 - auditory stuff in init
+- add pinkpanther 2 file if we choose that!
 
 - tineke: should i store sound onset times to csv? or is trigger at sound onset enough?
 sound_onset_psy = flip_marks["t_onset_psy"]
 sound_onset_dev = flip_marks["t_onset_dev"]
+- should i store anything to csv in MMN? no right`?
+
+- move stuff to init
+
+- should i load the movie to datapixx same as audio? no right as too big anyway
 """
 from psychopy import visual, core, event, sound, monitors
 import csv, time, os
 
-from MMN_init import (  SUB, SUB_DIR,
+from MMN_init import (  MRS, SUB, RUN, SUB_DIR, STIM_DIR, SOA,
                         # triggers
                         TRIG_STD, TRIG_DDEV, 
                         TRIG_RUN_START, TRIG_RUN_END,
                         # vpixx
                         device, buttonCodes, myLog, stim_monitor,
                         # preload
-                        preload_stim, preload_txt)
+                        preload_stimuli, preload_txt)
 
-from utils.pixel_mode           import trigger_to_RGB, draw_pixel, print_trigger_info
+from utils.pixel_mode           import pixel_time, trigger_to_RGB, draw_pixel, print_trigger_info
 from utils.buttons              import collect_response, flush_buttons
 from utils.escape_cleanup_abort import check_abort, cleanup
-
-# =================================================================
-# TO BE CHANGED BY EXPERIMENTER FOR EACH RUN
-# =================================================================
-RUN = 1     # 1, then 2          
-# =================================================================
 
 # -------------------- GENERAL --------------------
 #timestamp = time.strftime('%Y%m%d_%H%M%S') # this is only needed for logging. we dont need any logging here?
 psychopy_clock = core.Clock()
-pixel_time = 0.016 # show the pixel for 2 frames
-SOA = 0.5 # stimulus onset asynchrony (time between sound onsets)
-trial_idx = 0
-next_sound_time = 0.0
 
 # -------------------- WINDOW --------------------
 monitor_settings = stim_monitor()
@@ -55,28 +51,30 @@ win = visual.Window(
 win.mouseVisible = False
 mouse = event.Mouse(visible=False)
 
-# -------------------- PRELOAD STIMULI & TEXT --------------------
-stim = preload_stim(win, RUN) # RUN passed to preload_stim
-movie = stim["movie"]
-std_sound = stim["std_sound"]
-ddev_sound = stim["ddev_sound"]
-
+# -------------------- PRELOAD TEXT & STIMULI --------------------
 txt = preload_txt(win)
 instr = txt["txt_intro"]
 txt_finished = txt["txt_finished"]
 
-# -------------------- TRIAL LOADING --------------------
+stim = preload_stimuli(win, STIM_DIR, SUB_DIR, device, current_run=RUN, dB_SL=60)
+# audio
+audio_reg = stim["Audio"]
+# visual 
+movie = stim["movie"]
+
+# -------------------- LOAD TRIALS --------------------
 def load_trials():
-    master_sequence_file = os.path.join(SUB_DIR, f"{SUB}_MMN_master_trial_sequence.csv")
-    if not os.path.exists(master_sequence_file):
-        raise FileNotFoundError(f"ERROR: Master sequence file not found for {SUB}!")
-    with open(master_sequence_file, "r", encoding="utf-8") as f:
+    sequence_file = os.path.join(SUB_DIR, f"{SUB}_MMN_run{RUN}_trial_sequence.csv")
+    if not os.path.exists(sequence_file):
+        raise FileNotFoundError(f"ERROR: Sequence file not found for {SUB}!")
+    with open(sequence_file, "r", encoding="utf-8") as f:
         all_trials = list(csv.DictReader(f))
-    current_run_trials = [t for t in all_trials if int(t["run"]) == RUN]
-    if not current_run_trials:
-        raise ValueError(f"Could not find any trials for RUN {RUN} in the master file.")
-    print(f"Successfully loaded {len(current_run_trials)} trials for RUN {RUN}.")
-    return current_run_trials
+
+    if not all_trials:
+        raise ValueError(f"Could not find any trials in sequence file for RUN {RUN}.")
+
+    print(f"Successfully loaded {len(all_trials)} trials (should be 640) for RUN {RUN}.")
+    return all_trials
 
 trials = load_trials()
 
@@ -91,7 +89,7 @@ flush_buttons(device, myLog)
 while True:
     button, _ = collect_response(device, myLog, buttonCodes)
     
-    if button in ["red", "green"]: # for VPIXX
+    if button in ["red", "green"]:
     #if event.getKeys(keyList=['r','g','b']): # for keyboard testing: wait for any key press to start
         break
     if check_abort():
@@ -103,20 +101,41 @@ while True:
 #     countdown_text.draw()
 #     win.flip()
 #     core.wait(1.0) # Show each number for 1 second
-print(f"Starting Run {RUN}...")
+print(f"Starting RUN {RUN}...")
 
-# -------------------- MAIN LOOP --------------------
+# -------------------- START MOVIE --------------------
 movie.setAutoDraw(True)
 movie.play()
 psychopy_clock.reset()
 
 draw_pixel(win, trigger_to_RGB(TRIG_RUN_START))
+
 win.flip()
+device.updateRegisterCache() # check erfan if pre or post wait
+
+# debug
+print(f"TRIG START ON {TRIG_RUN_START} = {trigger_to_RGB(TRIG_RUN_START)}")
+print_trigger_info(device)
+print("")
+
 core.wait(pixel_time)  # to let trigger pixel settle
-device.updateRegisterCache()
 
-#print_trigger_info(device, TRIG_RUN_START)
+# debug
+print(f"should still be: TRIG START ON {TRIG_RUN_START} = {trigger_to_RGB(TRIG_RUN_START)}")
+print_trigger_info(device)
+print("")
 
+win.flip() # Movie continues + Trigger cleared
+
+# debug
+print(f"should still be gray background [212, 212, 212]")
+print_trigger_info(device)
+print("")
+
+# -------------------- MAIN LOOP --------------------
+# Initialize trial index and timing for the first sound
+trial_idx = 0
+next_sound_time = 0.0
 
 while trial_idx < len(trials):
     check_abort()
@@ -131,31 +150,34 @@ while trial_idx < len(trials):
         # Map trial type to trigger
         if stim_type == "STD":
             current_trig = TRIG_STD
-            sound_to_play = std_sound
+            sound_to_play = audio_reg['std_sound']
         else: # DDEV
             current_trig = TRIG_DDEV
-            sound_to_play = ddev_sound
+            sound_to_play = audio_reg['ddev_sound']
 
         
         # --- 2. TRIGGER PRESENTATION
         # The movie is drawn automatically via setAutoDraw(True)
+        # firt audio, then trigger pixel, then flip to present both together
+            
+        if MRS == 0:
+            # AUDIO PSYCHOPY
+            win.callOnFlip(sound_to_play.play)  # audio exactly on flip -> THIS WORKS IN PSYCHOPY
+        
+        if MRS == 1:
+            # AUDIO VPIXX  -----------> ADAPT!!!!!!!!!!! make wihtout "if"?
+            # prepare audio, not execute yet
+            infoaud_fb = audio_reg
+            device.audio.stopSchedule()
+            device.audio.setAudioSchedule(0.0, infoaud_fb['fs'], infoaud_fb['n'], 'mono')
+            device.audio.setReadAddress(infoaud_fb['addr'])
+            device.audio.startSchedule()
+            
+
+
+
         draw_pixel(win, trigger_to_RGB(current_trig)) # Draw trigger pixel LAST
 
-        # Sync sound and register cache timing to the flip
-        win.callOnFlip(sound_to_play.play)
-
-        # audio for psychopy
-        #win.callOnFlip(audio_reg.play)  # audio exactly on flip -> THIS WORKS IN PSYCHOPY
-        
-        # audio for vpixx
-        infoaud_fb = audio_reg
-        device.audio.stopSchedule()
-        device.audio.setAudioSchedule(0.0, infoaud_fb['fs'], infoaud_fb['n'], 'mono')
-        device.audio.setReadAddress(infoaud_fb['addr'])
-        device.audio.startSchedule()
-        device.updateRegisterCache() # or self.device.updateRegCacheAfterVideoSync() ?
-
-        
         win.flip() # Sound plays + Movie continues + Trigger appears
         
         core.wait(pixel_time) # to let trigger pixel settle (consistent with emotion exp)
