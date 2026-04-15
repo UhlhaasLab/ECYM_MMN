@@ -104,11 +104,11 @@ while True:
 print(f"Starting RUN {RUN}...")
 
 # -------------------- START MOVIE --------------------
+# is this paradigm for MMN (OPM-MEG, vpixx datapixx3) with silent movie as background ok like this?
 movie.setAutoDraw(True)
 movie.play()
-psychopy_clock.reset()
 
-draw_pixel(win, trigger_to_RGB(TRIG_RUN_START))
+draw_pixel(win, trigger_to_RGB(TRIG_RUN_START)) # actually not important as movie is just for background
 
 win.flip()
 device.updateRegisterCache() # check erfan if pre or post wait
@@ -133,16 +133,18 @@ print_trigger_info(device)
 print("")
 
 # -------------------- MAIN LOOP --------------------
-# Initialize trial index and timing for the first sound
-trial_idx = 0
-next_sound_time = 0.0
+win.callOnFlip(psychopy_clock.reset) # set clock=0
+win.flip()  # this flip defines t=0
+next_sound_time = SOA # first sound starts at SOA=0.5s
+trial_idx = 0 # initialize trial index (for the first sound)
 
+# the most important thing for later analyses is that trigger and DDEV sound onset are  exactly in the same moment. the MEG analysis is locked to stimulus (DDEV) onset. 
 while trial_idx < len(trials):
     check_abort()
 
-    current_time = psychopy_clock.getTime()
+    current_time = psychopy_clock.getTime() # for timing the sounds
 
-    # --- 1. CHECK if it's time for a sound event ---
+    # --- CHECK if it's time for a sound event ---
     if current_time >= next_sound_time:
         stim_info = trials[trial_idx]
         stim_type = stim_info['stim_type']
@@ -189,7 +191,7 @@ while trial_idx < len(trials):
         device.updateRegisterCache()
 
         # Update timing for the next sound
-        next_sound_time += SOA
+        next_sound_time += SOA # += means that we add the SOA to the current next_sound_time, so if the first sound is at 0.5s, the next will be at 1.0s, then 1.5s, etc.
         trial_idx += 1
 
     else:
