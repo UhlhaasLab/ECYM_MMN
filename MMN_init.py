@@ -6,9 +6,9 @@ from pypixxlib.datapixx import DATAPixx3
 # =================================================================
 # TO BE CHANGED BY EXPERIMENTER
 #
-# run 2x (one per run)
+# change and run this 2x (once per run)
 # =================================================================
-SUB = "JOH5"
+SUB = "MSR01"
 RUN = 1        # 1, then 2
 # =================================================================
 
@@ -334,7 +334,6 @@ def assign_subject_gains(in_audio_reg, threshold_linear, per_tone_dBSL, master=1
 # Reserve a thin strip at the left edge so the trigger pixel is not covered by movie content.
 PIXEL_MODE_STRIP_PX = 2
 
-
 def preload_stimuli(win, stimulipath, subjectpath, vpdevice, current_run, dB_SL=60):
     if MRS == 0:
         # ======= AUDITORY
@@ -428,7 +427,7 @@ def preload_txt(win):
 # =================================================================
 if __name__ == "__main__":
     print("=====================================================")
-    print(f"RUNNING SETUP FOR PARTICIPANT {SUB}, and RUN {RUN}...")
+    print(f"RUNNING SETUP FOR PARTICIPANT {SUB}, and RUN {RUN} of 2 ...")
     print("=====================================================")
     # Ensure the subject's directory exists before creating the sequence file
     os.makedirs(SUB_DIR, exist_ok=True)
@@ -436,6 +435,6 @@ if __name__ == "__main__":
     if os.path.exists(os.path.join(SUB_DIR, f"{SUB}_MMN_run{RUN}_trial_sequence.csv")):
         print(f"WARNING: Sequence file for {SUB} and run {RUN} already exists! No action taken.")
     else:
-        # Create the master sequence file
+        # Create the sequence file
         create_participant_sequences(SUB_DIR, SUB, RUN)
         print(f"\nSetup complete. File created: {SUB}_MMN_run{RUN}_trial_sequence.csv. You can now run the MMN_RUN script.")
