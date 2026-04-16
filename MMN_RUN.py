@@ -42,7 +42,8 @@ win = visual.Window(
     monitor=monitor_settings['monitor_name'], size=monitor_settings['monitor_size_pix'], 
     fullscr=True, 
     units="deg", 
-    color=[212, 212, 212],
+    #color=[212, 212, 212],
+    color= [160, 160, 160], # slightly darker gray to increase contrast with trigger pixel
     colorSpace='rgb255', 
     #colorSpace='rgb',
     #colorSpace='rgb1',
@@ -134,33 +135,32 @@ print("")
 
 # -------------------- MAIN LOOP --------------------
 win.callOnFlip(psychopy_clock.reset) # set clock=0
-win.flip()  # this flip defines t=0
+win.flip()
+
 next_sound_time = SOA # first sound starts at SOA=0.5s
 trial_idx = 0 # initialize trial index (for the first sound)
 
-# the most important thing for later analyses is that trigger and DDEV sound onset are  exactly in the same moment. the MEG analysis is locked to stimulus (DDEV) onset. 
+# the most important thing for later analyses is that trigger and DDEV sound onset are exactly in the same moment. the MEG analysis is locked to stimulus (DDEV) onset. 
 while trial_idx < len(trials):
     check_abort()
 
     current_time = psychopy_clock.getTime() # for timing the sounds
 
-    # --- CHECK if it's time for a sound event ---
+    # --------- this if loop is for sound and trigger presentation, the else loop below is just to keep the movie moving until it's time for the next sound
     if current_time >= next_sound_time:
+        # Map trial type to sound and trigger
         stim_info = trials[trial_idx]
         stim_type = stim_info['stim_type']
 
-        # Map trial type to trigger
         if stim_type == "STD":
             current_trig = TRIG_STD
             sound_to_play = audio_reg['std_sound']
         else: # DDEV
             current_trig = TRIG_DDEV
             sound_to_play = audio_reg['ddev_sound']
-
         
-        # --- 2. TRIGGER PRESENTATION
-        # The movie is drawn automatically via setAutoDraw(True)
-        # firt audio, then trigger pixel, then flip to present both together
+        # ========== SOUND + TRIGGER PRESENTATION
+        # The movie is drawn automatically the whole time via setAutoDraw(True)
             
         if MRS == 0:
             # AUDIO PSYCHOPY
@@ -169,27 +169,21 @@ while trial_idx < len(trials):
         if MRS == 1:
             # AUDIO VPIXX  -----------> ADAPT!!!!!!!!!!! make wihtout "if"?
             # prepare audio, not execute yet
-            infoaud_fb = audio_reg
+            infoaud_fb = sound_to_play # here we only have 1 std and 1 ddev sound. thus audio_reg['std_sound'] = std_sound, audio_reg['ddev_sound'] = ddev_sound.
             device.audio.stopSchedule()
             device.audio.setAudioSchedule(0.0, infoaud_fb['fs'], infoaud_fb['n'], 'mono')
             device.audio.setReadAddress(infoaud_fb['addr'])
             device.audio.startSchedule()
-            
 
+        draw_pixel(win, trigger_to_RGB(current_trig))
 
-
-        draw_pixel(win, trigger_to_RGB(current_trig)) # Draw trigger pixel LAST
-
-        win.flip() # Sound plays + Movie continues + Trigger appears
+        win.flip() # Sound plays + Trigger appears (Movie continues in the background)
         
         core.wait(pixel_time) # to let trigger pixel settle (consistent with emotion exp)
-        device.updateRegisterCache()
-        #print_trigger_info(device, current_trig)
-
-        # --- 3. CLEAR TRIGGER ---
+        
+        # ========== clear trigger
         win.flip() # Movie continues + Trigger cleared
-        device.updateRegisterCache()
-
+        
         # Update timing for the next sound
         next_sound_time += SOA # += means that we add the SOA to the current next_sound_time, so if the first sound is at 0.5s, the next will be at 1.0s, then 1.5s, etc.
         trial_idx += 1

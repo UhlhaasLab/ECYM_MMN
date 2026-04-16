@@ -6,10 +6,10 @@ from pypixxlib.datapixx import DATAPixx3
 # =================================================================
 # TO BE CHANGED BY EXPERIMENTER
 #
-# run twice
+# run 2x (one per run)
 # =================================================================
-SUB = "JOH4"
-RUN = 1         # 1, then 2
+SUB = "JOH5"
+RUN = 1        # 1, then 2
 # =================================================================
 
 
@@ -27,16 +27,17 @@ os.makedirs(SUB_DIR, exist_ok=True) # make the folder if doesn't exist already
 
 MOVIE_RUN1  = os.path.join(STIM_DIR, "Pink_Panther_cartoon_1.mp4")
 MOVIE_RUN2  = os.path.join(STIM_DIR, "Pink_Panther_cartoon_1.mp4") # -----------> ADAPT which movie? fur now just ppanther_1, should be _2
-
 # Dictionary to map run number to movie file. This will be used in the preload function.
 MOVIE_FOR_RUN = {1: MOVIE_RUN1, 2: MOVIE_RUN2}
 
-# -------------------------- TRIGGERS --------------------
-TRIG_RUN_START  = 10
-TRIG_RUN_END    = 20
+# -------------------------- TRIGGERS (161-254) --------------------
+# use trigger numbers below 255 so it stays onyl in the G channel
+# and use trigger numbers above 160 so it actually goes UP. To make the signal go UP (to a higher voltage or a higher integer value in analysis), you must use numbers strictly greater than 160.
+TRIG_RUN_START  = 162
+TRIG_RUN_END    = 172
 
 TRIG_STD        = 200
-TRIG_DDEV       = 400
+TRIG_DDEV       = 240
 
 # ------------------- TRIAL STRUCTURE ----------------------------
 SOA = 0.5 # stimulus onset asynchrony (time between sound onsets)
@@ -241,7 +242,7 @@ def preload_tones(vpdevice, paths):
     # check length
     loaded          = {}
     total_samples   = 0
-    common_fs       = None # assume same samling freq
+    common_fs       = None # assume same samling freq ---------------> dario ADAPT: is this ok? or 44100hz ? change also for MMN???????????????????????????????? o
 
     for name, p in paths.items():
         x, fs, peak = _load_wav_float32(p)
@@ -417,7 +418,7 @@ def preload_stimuli(win, stimulipath, subjectpath, vpdevice, current_run, dB_SL=
 
 
 def preload_txt(win):
-    txt_intro = visual.TextStim(win, text="Sie werden einen Film sehen.\n\n Bitte konzentrieren Sie sich auf den Film und ignorieren Sie die Töne.\n\n Drücken Sie einen beliebigen Knopf, um zu starten.", height=1, pos=(0, 0), units='deg', color='black')
+    txt_intro = visual.TextStim(win, text="Sie werden einen Film sehen.\n\n Bitte konzentrieren Sie sich auf den Film und ignorieren Sie die Töne.\n\n Drücken Sie einen beliebigen Knopf um zu starten.", height=1, pos=(0, 0), units='deg', color='black')
     txt_finished = visual.TextStim(win, text="Dieser Durchgang ist beendet.\n Vielen Dank. \n\n Bitte warten Sie auf Anweisungen.", height=1, pos=(0, 0), units='deg', color='black')
     return {"txt_intro": txt_intro, "txt_finished": txt_finished}
 
