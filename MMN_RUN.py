@@ -52,6 +52,11 @@ win = visual.Window(
 win.mouseVisible = False
 mouse = event.Mouse(visible=False)
 
+# for frame rate timing (frameDur = 1.0 / win.getActualFrameRate())
+monitor_rr = monitor_settings["refresh_rate"]
+frameDur = 1.0 / monitor_rr # if monitor_rr else win.monitorFramePeriod    # use actual refresh rate if available, otherwise fallback to PsychoPy's estimate
+TRIG_FRAMES = 2 # pixel should show for 2 frames
+
 # -------------------- PRELOAD TEXT & STIMULI --------------------
 txt = preload_txt(win)
 instr = txt["txt_intro"]
