@@ -2,18 +2,15 @@
 
 TO DO
 - 2 simple comprehension questions after the run
-- add core waits 0.016
 - auditory stuff in init
 - add pinkpanther 2 file if we choose that!
 
 - tineke: should i store sound onset times to csv? or is trigger at sound onset enough?
-sound_onset_psy = flip_marks["t_onset_psy"]
-sound_onset_dev = flip_marks["t_onset_dev"]
+	sound_onset_psy = flip_marks["t_onset_psy"]
+	sound_onset_dev = flip_marks["t_onset_dev"]
+
 - should i store anything to csv in MMN? no right`?
 
-- move stuff to init
-
-- should i load the movie to datapixx same as audio? no right as too big anyway
 """
 from psychopy import visual, core, event, sound, monitors
 import csv, time, os
@@ -93,17 +90,15 @@ trials = load_trials()
 # device.updateRegisterCache()
 
 # flush_buttons(device, myLog)
-
 # while True:
 #     button, _ = collect_response(device, myLog, buttonCodes)
-    
 #     if button in ["red", "green"]:
 #     #if event.getKeys(keyList=['r','g','b']): # for keyboard testing: wait for any key press to start
 #         break
 #     if check_abort():
 #         core.quit()
 
-# -------------------- COUNTDOWN --------------------
+# # -------------------- COUNTDOWN --------------------
 # for number in ["3", "2", "1"]:
 #     countdown_text = visual.TextStim(win, text=number, height=3, color='black')
 #     countdown_text.draw()
