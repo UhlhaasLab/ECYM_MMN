@@ -11,6 +11,14 @@ TO DO
 
 - should i store anything to csv in MMN? no right`?
 
+
+
+- make movie show only small in the middle of screen!!
+- make csv log with times
+- maybe make 1 audio sequence and just send this at the beginning, then use the whole sequence in 1 file. (its te exacte same thing then for 1 run)
+    maybe also for ASSR??
+
+    
 """
 from psychopy import visual, core, event, sound, monitors
 import csv, time, os
@@ -84,26 +92,26 @@ def load_trials():
 trials = load_trials()
 
 # ============================================================================================
-# # -------------------- INSTRUCTIONS --------------------
-# instr.draw()
-# win.flip()
-# device.updateRegisterCache()
+# -------------------- INSTRUCTIONS --------------------
+instr.draw()
+win.flip()
+device.updateRegisterCache()
 
-# flush_buttons(device, myLog)
-# while True:
-#     button, _ = collect_response(device, myLog, buttonCodes)
-#     if button in ["red", "green"]:
-#     #if event.getKeys(keyList=['r','g','b']): # for keyboard testing: wait for any key press to start
-#         break
-#     if check_abort():
-#         core.quit()
+flush_buttons(device, myLog)
+while True:
+    button, _ = collect_response(device, myLog, buttonCodes)
+    if button in ["red", "green"]:
+    #if event.getKeys(keyList=['r','g','b']): # for keyboard testing: wait for any key press to start
+        break
+    if check_abort():
+        core.quit()
 
-# # -------------------- COUNTDOWN --------------------
-# for number in ["3", "2", "1"]:
-#     countdown_text = visual.TextStim(win, text=number, height=3, color='black')
-#     countdown_text.draw()
-#     win.flip()
-#     core.wait(1.0) # Show each number for 1 second
+# -------------------- COUNTDOWN --------------------
+for number in ["3", "2", "1"]:
+    countdown_text = visual.TextStim(win, text=number, height=3, color='black')
+    countdown_text.draw()
+    win.flip()
+    core.wait(1.0) # Show each number for 1 second
 print(f"Starting MMN RUN {RUN}...")
 
 # -------------------- START MOVIE --------------------
@@ -114,10 +122,10 @@ for f in range(TRIG_FRAMES):
     draw_pixel(win, trigger_to_RGB(TRIG_RUN_START))
     win.flip()
 
-# debug
-print(f"TRIG START ON {TRIG_RUN_START}, RGB: {trigger_to_RGB(TRIG_RUN_START)}")
-print_trigger_info(device)
-print("")
+# # debug
+# print(f"TRIG START ON {TRIG_RUN_START}, RGB: {trigger_to_RGB(TRIG_RUN_START)}")
+# print_trigger_info(device)
+# print("")
 
 win.flip() # Movie continues + Trigger cleared
 
@@ -136,12 +144,10 @@ next_trial_frame = soa_frames
 while trial_idx < len(trials):
     check_abort()
 
-    # ---------- PRESENT SOUND AT SCHEDULED FRAME ----------
+    # ---------- check for correct time to present sound ----------
     if frameN == next_trial_frame:
-
         stim_info = trials[trial_idx]
         stim_type = stim_info['stim_type']
-
         if stim_type == "STD":
             current_trig = TRIG_STD
             sound_to_play = audio_reg['std_sound']
@@ -153,38 +159,35 @@ while trial_idx < len(trials):
         for trig_frame in range(TRIG_FRAMES): # shown for frame 0, and 1 (2 frames in total)
             # frame 0 => sound + trigger
             # frame 1 => just trigger pixel (to make sure trigger is visible for at least 2 frames, in case of any timing issues)
-            if trig_frame == 0:
-                # audio will only play at frame==0, but pixel will show for TRIG_FRAMES
-                if MRS == 0:
-                    # audio psychopy
+            if trig_frame == 0: # audio will only play at frame==0, but pixel will show for TRIG_FRAMES
+                if MRS == 0: # audio psychopy
                     win.callOnFlip(sound_to_play.play)
                 else:
                     # AUDIO VPIXX  -----------> ADAPT!!!!!!!!!!! make wihtout "if"?
-                    # prepare audio, not execute yet
+                    # prepare audio, not execute yet. it gets executed at win.flip() below
                     infoaud_fb = sound_to_play # here we only have 1 std and 1 ddev sound. thus audio_reg['std_sound'] = std_sound, audio_reg['ddev_sound'] = ddev_sound.
                     device.audio.stopSchedule()
                     device.audio.setAudioSchedule(0.0, infoaud_fb['fs'], infoaud_fb['n'], 'mono')
                     device.audio.setReadAddress(infoaud_fb['addr'])
                     device.audio.startSchedule()
-
-                device.updateRegisterCache() # make sure the audio trigger is sent at the same time as sound onset (everything executes synchronously at VSync). this is like .draw before flip.
+                    device.updateRegCacheAfterVideoSync()
 
             draw_pixel(win, trigger_to_RGB(current_trig))
             win.flip()
 
-            # debug only once per trial
-            if trig_frame == TRIG_FRAMES - 1: # -1 is needed here because trig_frame starts at 0. so if TRIG_FRAMES=2, we want to print debug info at trig_frame=1, which is the last frame of the trigger presentation.
-                print(f"current_trig {current_trig}, RGB: {trigger_to_RGB(current_trig)}")
-                print_trigger_info(device)
-                print("")
+            # # debug only once per trial
+            # if trig_frame == TRIG_FRAMES - 1: # -1 is needed here because trig_frame starts at 0. so if TRIG_FRAMES=2, we want to print debug info at trig_frame=1, which is the last frame of the trigger presentation.
+            #     print(f"current_trig {current_trig}, RGB: {trigger_to_RGB(current_trig)}")
+            #     print_trigger_info(device)
+            #     print("")
 
         # clear trigger
         win.flip()
 
-        # debug gray
-        print(f"gray")
-        print_trigger_info(device)
-        print("")
+        # # debug gray
+        # print(f"gray")
+        # print_trigger_info(device)
+        # print("")
 
         trial_idx += 1
         next_trial_frame += soa_frames  # schedule next sound

@@ -1,4 +1,5 @@
 import os, random, csv
+import numpy as np
 from psychopy import visual, monitors, sound
 
 from pypixxlib.datapixx import DATAPixx3
@@ -8,7 +9,7 @@ from pypixxlib.datapixx import DATAPixx3
 #
 # change and run this 2x (once per run)
 # =================================================================
-SUB = "MSR01"
+SUB = "TVE25_01"
 RUN = 1        # 1, then 2
 # =================================================================
 
@@ -17,7 +18,7 @@ RUN = 1        # 1, then 2
 
 
 
-MRS = 0     # 0=no, 1=yes
+MRS = 1     # 0=no, 1=yes
 
 # -------------------------- PATHS -----------------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))   # script location
@@ -242,7 +243,7 @@ def preload_tones(vpdevice, paths):
     # check length
     loaded          = {}
     total_samples   = 0
-    common_fs       = None # assume same samling freq ---------------> dario ADAPT: is this ok? or 44100hz ? change also for MMN???????????????????????????????? o
+    common_fs       = None # assume same samling freq
 
     for name, p in paths.items():
         x, fs, peak = _load_wav_float32(p)
